@@ -1,0 +1,113 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<MorpheusModel version="4">
+    <Description>
+        <Details></Details>
+        <Title>Chemotaxis</Title>
+    </Description>
+    <Space>
+        <Lattice class="cubic">
+            <Neighborhood>
+                <Distance>2</Distance>
+            </Neighborhood>
+            <Size symbol="size" value="100, 100, 100"/>
+            <BoundaryConditions>
+                <Condition boundary="x" type="periodic"/>
+                <Condition boundary="y" type="periodic"/>
+                <Condition boundary="z" type="periodic"/>
+            </BoundaryConditions>
+            <NodeLength value="1"/>
+        </Lattice>
+        <SpaceSymbol symbol="space"/>
+    </Space>
+    <Time>
+        <StartTime value="0"/>
+        <StopTime value="100"/>
+        <TimeSymbol symbol="time"/>
+    </Time>
+    <Global>
+        <Field symbol="F" value="0.0" name="FGF">
+            <Diffusion rate="600"/>
+        </Field>
+        <Field symbol="W" value="0.0" name="Wnt">
+            <Diffusion rate="600"/>
+        </Field>
+        <Field symbol="C" value="0.0" name="CXCL12a">
+            <Diffusion rate="20"/>
+        </Field>
+        <Constant symbol="deltaC" value="0.2" name="CXCL12a external decay"/>
+        <System solver="adaptive45" time-step="1.0" name="PDE">
+            <DiffEqn symbol-ref="C">
+                <Expression>alpha - deltaC*C</Expression>
+            </DiffEqn>
+            <DiffEqn symbol-ref="F">
+                <Expression>PF - deltaF*F</Expression>
+            </DiffEqn>
+            <DiffEqn symbol-ref="W">
+                <Expression>PW-deltaW*W</Expression>
+            </DiffEqn>
+        </System>
+        <Constant symbol="deltaF" value="0.15" name="FGF external decay"/>
+        <Constant symbol="deltaW" value="0.15" name="Wnt external decay"/>
+        <Constant symbol="PF" value="0.5" name="FGF Production"/>
+        <Constant symbol="PW" value="3.0" name="Wnt Production"/>
+        <Constant symbol="alpha" value="0.2" name="CXCL12a production"/>
+    </Global>
+    <CellTypes>
+        <CellType class="biological" name="cells">
+            <Property symbol="FR" value="0.6"/>
+            <Property symbol="WR" value="0.4"/>
+            <Property symbol="CXCLR" value="0.3"/>
+            <Mapper>
+                <Input value="C"/>
+                <Output symbol-ref="CXCLR" mapping="average"/>
+            </Mapper>
+        </CellType>
+    </CellTypes>
+    <CellPopulations>
+        <Population size="100" type="cells">
+            <InitRectangle mode="regular" number-of-cells="100">
+                <Dimensions size="1.0, 1.0, 1.0" origin="0.0, 0.0, 0.0"/>
+            </InitRectangle>
+        </Population>
+    </CellPopulations>
+    <Analysis>
+        <Gnuplotter time-step="100" decorate="true">
+            <Plot>
+                <Field symbol-ref="C" isolines="5" min="0"/>
+                <Cells value="CXCLR">
+                    <ColorMap>
+                        <Color value="2.0" color="blue"/>
+                        <Color value="0" color="red"/>
+                    </ColorMap>
+                </Cells>
+            </Plot>
+            <Terminal name="png"/>
+            <Plot>
+                <Field symbol-ref="F" isolines="5" min="0"/>
+                <Cells value="FR">
+                    <ColorMap>
+                        <Color value="2" color="green"/>
+                        <Color value="0" color="red"/>
+                    </ColorMap>
+                </Cells>
+            </Plot>
+            <Plot>
+                <Field symbol-ref="W" isolines="5" min="0"/>
+                <Cells value="WR">
+                    <ColorMap>
+                        <Color value="2" color="red"/>
+                        <Color value="0" color="red"/>
+                    </ColorMap>
+                </Cells>
+            </Plot>
+        </Gnuplotter>
+    </Analysis>
+    <CPM>
+        <Interaction/>
+        <ShapeSurface scaling="norm">
+            <Neighborhood>
+                <Distance>2</Distance>
+            </Neighborhood>
+        </ShapeSurface>
+    </CPM>
+</MorpheusModel>
