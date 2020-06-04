@@ -1,0 +1,215 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<MorpheusModel version="4">
+    <Description>
+        <Title>Example-Proliferation3D</Title>
+        <Details></Details>
+    </Description>
+    <Global>
+        <Constant symbol="F_1" value="1" name="steady-state FGF receptor concentration"/>
+        <Constant symbol="r_F" value="1.0" name="FGF receptor endocytosis rate"/>
+        <Field symbol="C" value="1" name="CXCL12a">
+            <Diffusion rate="0"/>
+        </Field>
+        <System solver="adaptive45">
+            <DiffEqn symbol-ref="C">
+                <Expression>alpha - delta_C*C-k_CW*C*omega_W(W)-k_CF*C*omega_F(F)</Expression>
+            </DiffEqn>
+            <DiffEqn symbol-ref="F">
+                <Expression>-delta_F * F - k_Fon*F*F_R_normalized*1/(1+F/K_F) +p_F*W_R_normalized</Expression>
+            </DiffEqn>
+            <DiffEqn symbol-ref="W">
+                <Expression>-delta_W * W - k_Won*W*W_R_normalized*1/(1+W/K_W) +p_W*F_R_normalized</Expression>
+            </DiffEqn>
+        </System>
+        <Constant symbol="alpha" value="0.2&#xa;" name="CXCL12a production"/>
+        <Constant symbol="delta_C" value="0.2" name="CXCL12a external decay"/>
+        <Constant symbol="k_CW" value="0.05" name="CXCL12a decay by WntR cells"/>
+        <Constant symbol="k_CF" value="1.0" name="CXCL12a decay by FGFR cells"/>
+        <Field symbol="F" value="1" name="FGF ligand">
+            <Diffusion rate="0"/>
+        </Field>
+        <Constant symbol="K_F" value="1" name="FGF M-M constant"/>
+        <Constant symbol="K_W" value="1.0" name="Wnt M-M constant "/>
+        <Constant symbol="delta_F" value="0.002" name="FGF ligand decay rate"/>
+        <Constant symbol="k_Fon" value="0.1" name="FGF ligand binding rate"/>
+        <Function symbol="omega_W">
+            <Expression>W_0/W_1/(1+x)/x</Expression>
+            <Parameter symbol="x"/>
+        </Function>
+        <Function symbol="omega_F">
+            <Expression>F_0/F_1/(1+x)/x</Expression>
+            <Parameter symbol="x"/>
+        </Function>
+        <Constant symbol="F_0" value="0.1" name="FGF IC50"/>
+        <Constant symbol="W_0" value="0.001" name="Wnt IC50"/>
+        <Constant symbol="W_1" value="0.03" name="steady-state Wnt receptor concentration"/>
+        <Field symbol="W" value="1" name="Wnt ligand"/>
+        <Constant symbol="p_F" value="0.5" name="FGF secretion "/>
+        <Constant symbol="p_W" value="3.0" name="Wnt secretion"/>
+        <Constant symbol="delta_W" value="0.003" name="Wnt ligand decay rate"/>
+        <Constant symbol="k_Won" value="0.005" name="Wnt ligand binding rate"/>
+        <Constant symbol="m_exp" value="5.0"/>
+        <Constant symbol="r_W" value="1.0" name="Wnt receptor endocytosis rate"/>
+    </Global>
+    <Space>
+        <SpaceSymbol symbol="space"/>
+        <Lattice class="square">
+            <Neighborhood>
+                <Order>1</Order>
+            </Neighborhood>
+            <Size symbol="size" value="100, 100, 0"/>
+        </Lattice>
+    </Space>
+    <Time>
+        <StartTime value="0"/>
+        <StopTime value="2500"/>
+        <TimeSymbol symbol="time"/>
+        <RandomSeed value="1456688742"/>
+    </Time>
+    <CellTypes>
+        <CellType class="medium" name="medium">
+            <Variable symbol="C_local" value="0.0"/>
+            <Variable symbol="F_R" value="0.0" name="FGF_receptors"/>
+            <Variable symbol="W_R" value="0.0"/>
+            <Variable symbol="W_R_normalized" value="0.0"/>
+            <Variable symbol="F_R_normalized" value="0.0"/>
+        </CellType>
+        <CellType class="medium" name="matrix">
+            <Variable symbol="C_local" value="0.0"/>
+            <Variable symbol="F_R" value="0.0" name="FGF_receptors"/>
+            <Variable symbol="W_R" value="0.0"/>
+            <Variable symbol="W_R_normalized" value="0.0"/>
+            <Variable symbol="F_R_normalized" value="0.0"/>
+        </CellType>
+        <CellType class="biological" name="cell">
+            <Property symbol="Vt" value="500" name="Target Volume"/>
+            <Property symbol="divisions" value="0"/>
+            <VolumeConstraint target="Vt" strength="1.0"/>
+            <SurfaceConstraint target="1.0" mode="aspherity" strength="1.0"/>
+            <CellDivision division-plane="major">
+                <Condition>rand_uni(0,1) &lt; 0.0025 and cell.volume > Vt*0.9</Condition>
+                <Triggers>
+                    <Rule symbol-ref="divisions">
+                        <Expression>divisions + 0.5</Expression>
+                    </Rule>
+                </Triggers>
+            </CellDivision>
+            <System solver="adaptive45">
+                <DiffEqn symbol-ref="F_R">
+                    <Expression>r_F*(F_1/(1+(W_R * (W_local/(1+W_local))^m_exp) - F_R))</Expression>
+                </DiffEqn>
+                <DiffEqn symbol-ref="W_R">
+                    <Expression>r_W*(W_1/(1+(F_R * (F_local/(1+F_local))^m_exp) - W_R))</Expression>
+                </DiffEqn>
+            </System>
+            <Property symbol="C_local" value="0.0"/>
+            <Property symbol="F_local" value="0.0"/>
+            <Mapper name="Global FGF concentration to local cell">
+                <Input value="F"/>
+                <Output symbol-ref="F_local" mapping="average"/>
+            </Mapper>
+            <Mapper name="Global CXCL12a concentration to local cell">
+                <Input value="C&#xa;"/>
+                <Output symbol-ref="C_local" mapping="average"/>
+            </Mapper>
+            <Mapper name="Global Wnt concentration to local cell">
+                <Input value="W"/>
+                <Output symbol-ref="W_local" mapping="average"/>
+            </Mapper>
+            <Property symbol="W_local" value="0.0"/>
+            <Property symbol="F_R" value="0.0"/>
+            <Property symbol="W_R" value="0.0"/>
+            <Property symbol="W_R_normalized" value="0.0"/>
+            <Equation symbol-ref="W_R_normalized">
+                <Expression>W_R/cell.volume</Expression>
+            </Equation>
+            <Property symbol="F_R_normalized" value="0.0"/>
+            <Equation symbol-ref="F_R_normalized">
+                <Expression>F_R/cell.volume</Expression>
+            </Equation>
+        </CellType>
+    </CellTypes>
+    <CPM>
+        <Interaction default="0">
+            <Contact type1="cell" type2="cell" value="-6"/>
+            <Contact type1="cell" type2="medium" value="0"/>
+            <Contact type1="cell" type2="matrix" value="-2"/>
+        </Interaction>
+        <MonteCarloSampler stepper="edgelist">
+            <MCSDuration value="1"/>
+            <Neighborhood>
+                <Order>2</Order>
+            </Neighborhood>
+            <MetropolisKinetics temperature="0.5"/>
+        </MonteCarloSampler>
+        <ShapeSurface scaling="norm">
+            <Neighborhood>
+                <Distance>2.5</Distance>
+            </Neighborhood>
+        </ShapeSurface>
+    </CPM>
+    <CellPopulations>
+        <Population size="0" type="cell">
+            <InitCellObjects mode="distance">
+                <Arrangement repetitions="1, 1, 1" displacements="1, 1, 1">
+                    <Sphere radius="5" center="50,50,50"/>
+                </Arrangement>
+            </InitCellObjects>
+        </Population>
+        <BoundaryValue boundary="x" value="matrix"/>
+        <BoundaryValue boundary="-x" value="matrix"/>
+        <BoundaryValue boundary="y" value="matrix"/>
+        <BoundaryValue boundary="-y" value="matrix"/>
+        <BoundaryValue boundary="z" value="matrix"/>
+        <BoundaryValue boundary="-z" value="matrix"/>
+    </CellPopulations>
+    <Analysis>
+        <Gnuplotter>
+            <Plot/>
+            <Terminal name="png"/>
+        </Gnuplotter>
+        <Logger time-step="100">
+            <Input>
+                <Symbol symbol-ref="celltype.cell.size"/>
+            </Input>
+            <Output>
+                <TextOutput/>
+            </Output>
+            <Plots>
+                <Plot time-step="500">
+                    <Style style="linespoints"/>
+                    <Terminal terminal="png"/>
+                    <X-axis>
+                        <Symbol symbol-ref="time"/>
+                    </X-axis>
+                    <Y-axis>
+                        <Symbol symbol-ref="celltype.cell.size"/>
+                    </Y-axis>
+                </Plot>
+            </Plots>
+        </Logger>
+        <Logger time-step="10" name="Concentration">
+            <Input force-node-granularity="true"/>
+            <Output>
+                <TextOutput/>
+            </Output>
+            <Plots>
+                <Plot time-step="10">
+                    <Style style="points"/>
+                    <Terminal terminal="png"/>
+                    <X-axis>
+                        <Symbol symbol-ref="space.x"/>
+                    </X-axis>
+                    <Y-axis>
+                        <Symbol symbol-ref="C"/>
+                        <Symbol symbol-ref="W"/>
+                        <Symbol symbol-ref="F"/>
+                    </Y-axis>
+                </Plot>
+            </Plots>
+            <Restriction>
+                <Slice value="size.y/2" axis="y"/>
+            </Restriction>
+        </Logger>
+    </Analysis>
+</MorpheusModel>
