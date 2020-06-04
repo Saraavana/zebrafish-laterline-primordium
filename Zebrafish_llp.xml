@@ -5,17 +5,11 @@
         <Title>Chemotaxis</Title>
     </Description>
     <Space>
-        <Lattice class="cubic">
+        <Lattice class="square">
             <Neighborhood>
-                <Distance>2</Distance>
+                <Order>1</Order>
             </Neighborhood>
-            <Size symbol="size" value="100, 100, 100"/>
-            <BoundaryConditions>
-                <Condition boundary="x" type="periodic"/>
-                <Condition boundary="y" type="periodic"/>
-                <Condition boundary="z" type="periodic"/>
-            </BoundaryConditions>
-            <NodeLength value="1"/>
+            <Size symbol="size" value="200, 200, 0"/>
         </Lattice>
         <SpaceSymbol symbol="space"/>
     </Space>
@@ -46,27 +40,52 @@
                 <Expression>PW-deltaW*W</Expression>
             </DiffEqn>
         </System>
-        <Constant symbol="deltaF" value="0.15" name="FGF external decay"/>
         <Constant symbol="deltaW" value="0.15" name="Wnt external decay"/>
-        <Constant symbol="PF" value="0.5" name="FGF Production"/>
-        <Constant symbol="PW" value="3.0" name="Wnt Production"/>
-        <Constant symbol="alpha" value="0.2" name="CXCL12a production"/>
+        <Constant symbol="deltaF" value="0.15" name="FGF external decay"/>
     </Global>
     <CellTypes>
         <CellType class="biological" name="cells">
             <Property symbol="FR" value="0.6"/>
             <Property symbol="WR" value="0.4"/>
             <Property symbol="CXCLR" value="0.3"/>
-            <Mapper>
+            <Mapper name="Ligand concentration around CXCL12aR">
                 <Input value="C"/>
                 <Output symbol-ref="CXCLR" mapping="average"/>
             </Mapper>
+            <Mapper name="Ligand concentration around FGFR">
+                <Input value="F"/>
+                <Output symbol-ref="FR" mapping="average"/>
+            </Mapper>
+            <Mapper name="Ligand concentration around WntR">
+                <Input value="W"/>
+                <Output symbol-ref="WR" mapping="average"/>
+            </Mapper>
+            <Chemotaxis field="C" contact-inhibition="false" strength="s" name="WntR Leading cells migration" retraction="true"/>
+            <Chemotaxis field="F" contact-inhibition="false" strength="μ + s" name="FGFR Trailing cells migration" retraction="true"/>
+            <Property symbol="s" value="0.7" name="Force of chemotaxis"/>
+            <Property symbol="μ" value="0.001" name="Drag co-efficient"/>
+            <Property symbol="alpha" value="0.2" name="CXCL12a production"/>
+            <Property symbol="PF" value="0.5" name="FGF Production"/>
+            <Property symbol="PW" value="3.0" name="Wnt Production"/>
+        </CellType>
+        <CellType class="medium" name="medium">
+            <Constant symbol="alpha" value="0.0"/>
+            <Constant symbol="PF" value="0.0"/>
+            <Constant symbol="PW" value="0.0"/>
         </CellType>
     </CellTypes>
     <CellPopulations>
-        <Population size="100" type="cells">
-            <InitRectangle mode="regular" number-of-cells="100">
-                <Dimensions size="1.0, 1.0, 1.0" origin="0.0, 0.0, 0.0"/>
+        <Population size="0" type="cells">
+            <!--    <Disabled>
+        <InitCellObjects mode="order">
+            <Arrangement repetitions="20, 5, 0" displacements="10, 10, 0">
+                <Box size="10.0, 10.0, 0.0" origin="100.0, 25.0, 0.0"/>
+            </Arrangement>
+        </InitCellObjects>
+    </Disabled>
+-->
+            <InitRectangle mode="regular" number-of-cells="0.003 * size.x * size.y">
+                <Dimensions size="size.x, size.y, 0" origin="0.0, 0.0, 0.0"/>
             </InitRectangle>
         </Population>
     </CellPopulations>
@@ -101,6 +120,7 @@
                 </Cells>
             </Plot>
         </Gnuplotter>
+        <DependencyGraph format="svg" exclude-plugins="Gnuplotter"/>
     </Analysis>
     <CPM>
         <Interaction/>
